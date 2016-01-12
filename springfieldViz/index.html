@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<head>
+    <meta charset="UTF-8" />
+    <title>City Fix It Data</title>
+    <link rel="stylesheet" href="_css/main.css">
+    <script src="_js/jquery-1.11.0.min.js"></script>
+    <script src="_js/highcharts.js"></script>
+</head>
+<body>
+   <!-- Title Div -->
+   <div id="title">
+      <p id="titleText">City of Springfield Service Request Statistics (2009-2012)</p>
+   </div>
+   <!-- Chart By Year Div -->
+    <div id="chart-1" class="container">
+    </div>
+    <!-- Divider Div -->
+    <div id="divider"></div>
+    <!-- Chart By Problem Type Div -->
+    <div id="chart-2" class="container">
+    </div>
+<script>
+
+// function to return color for each problem type
+function colors(i) {
+  switch(i) {
+    case 0:
+      return "#c0392b";
+      break;
+    case 1:
+      return "#27ae60";
+      break;
+    case 2:
+      return "#3498db";
+      break;
+    case 3:
+      return "#f39c12";
+      break;
+    case 4:
+      return "#8e44ad";
+      break;
+    case 5:
+      return "#f1c40f";
+      break;
+    case 6:
+      return "#e74c3c";
+      break;
+    case 7:
+      return "#16a085";
+      break;
+    case 8:
+      return "#DB0A5B";
+      break;
+    case 9:
+      return "#BFBFBF";
+  };
+}
+
+// set up the initial options
+var optionsYear = {
+  chart: {
+    height: 555,
+    width: 300,
+    renderTo: "chart-1",
+    type: "spline",
+    style: {
+      fontFamily: "Helvetica,Arial,sans-serif"
+    }
+  },
+  legend: {
+    borderWidth: 0,
+    borderRadius: 0,
+    itemStyle: {
+      color: "#000000",
+      fontFamily: "Helvetica,Arial,sans-serif",
+      fontSize: "9px",
+      padding: 3
+    },
+    layout: 'vertical',
+    floating: true,
+    x: 58,
+    y: 25,
+    align: 'left',
+    verticalAlign: 'top',
+  },
+
+  plotOptions: {
+    series: {
+      lineWidth: 2,
+      marker: {
+         radius: 5
+      }
+    }
+  },
+  series: [],
+  title: {
+    text: "By Year",
+    style: {
+      color: "#000000",
+      fontFamily: "Helvetica,Arial,sans-serif",
+      fontSize: "14px",
+      fontWeight: "bold"
+    }
+  },
+  tooltip: {
+    borderRadius: 5,
+    borderWidth: 2,
+    shadow: false,
+    style: {
+      color: "#000000",
+      fontFamily: "Helvetica,Arial,sans-serif",
+      fontSize: "14px",
+      padding: "10px"
+    }
+  },
+  xAxis: {
+    title: {
+      style: {
+        color: "#333333",
+        fontFamily: "Helvetica,Arial,sans-serif"
+      },
+      text: "Year"
+   },
+    categories: [2009, 2010, 2011, 2012],
+    labels: {
+      y: 15,
+      style: {
+        color: "#333333",
+        fontFamily: "Helvetica,Arial,sans-serif"
+      }
+    },
+  },
+  yAxis: {
+    gridLineColor: "#BBBBBB",
+    gridLineDashStyle: "Dot",
+    startOnTick: false,
+    minPadding: 0.02,
+    labels: {
+      y: 3,
+      step: 2,
+      style: {
+        color: "#333333",
+        fontFamily: "Helvetica,Arial,sans-serif"
+      }
+    },
+    max: 7500,
+    tickInterval: 500,
+    title: {
+      style: {
+        color: "#333333",
+        fontFamily: "Helvetica,Arial,sans-serif"
+      },
+      text: "Number of Requests"
+    }
+  }
+}
+
+// ajax call to data from the csv file
+$.get("_data/chart1_cityfixitdata.csv", function (data) {
+
+  // split the csv by line
+  var lines = data.split(';');
+  var problemtypes = [];
+  var requestsByPT = [[], [], [], [], [], [], [], [], [], [], []];
+
+  // loop through each line using $.each
+  $.each(lines, function(lineNo, line) {
+
+    // turn each line into a data structure that contains:
+        // items[2] = # requests for that year
+        // items[4] = problem type
+    var items = line.split(",");
+
+    if (lineNo > 0) {
+      if (lineNo < 12) {
+         // extract name of problem type
+         requestsByPT[parseFloat(items[1])-1].push(items[4]);
+      }
+      // push number of requests per year per problem type
+      requestsByPT[parseFloat(items[1])-1].push(parseFloat(items[2]));
+    }
+
+  });
+
+  for(var i = 0; i < (requestsByPT.length)-1; i++) {
+    // create a placeholder object & pull the required value for each problem type
+    var seriesData = {
+      name: "",
+      data: [],
+      color: ""
+    };
+
+    seriesData.name = requestsByPT[i][0]; // name of the problem type
+
+    for (var j = 1; j < requestsByPT[i].length; j++) {
+      seriesData.data.push(parseFloat(requestsByPT[i][j])); // values per year
+    };
+
+    seriesData.color = colors(i); // assign color of the problem type
+
+    // after the object is properly constructed, push it to "optionsYear.series"
+    optionsYear.series.push(seriesData);
+
+  };
+
+  var chart = new Highcharts.Chart(optionsYear);
+
+});
+
+//================================== CHART 2 =====================================
+
+// set up the initial optionsProbType
+var optionsProbType = {
+  chart: {
+    renderTo: "chart-2",
+    type: "bar",
+    style: {
+      fontFamily: "Helvetica,Arial,sans-serif"
+    },
+    height: 555,
+    width: 495,
+  },
+  legend: {
+    borderRadius: 0,
+    borderWidth: 0,
+    align: 'right',
+    padding: 20,
+    layout: 'vertical',
+    verticalAlign: 'top',
+    x: -50,
+    y: 110,
+    backgroundColor: "#FFFFFF",
+    floating: true,
+    itemStyle: {
+      color: "#000000",
+      padding: 3,
+      fontFamily: "Helvetica,Arial,sans-serif",
+      fontSize: "11px"
+    }
+  },
+
+  plotOptions: {
+    series: {
+      stacking: "normal"
+    }
+  },
+  series: [],
+  title: {
+    text: "By Problem Type",
+    style: {
+      color: "#000000",
+      fontFamily: "Helvetica,Arial,sans-serif",
+      fontSize: "14px",
+      fontWeight: "bold"
+    }
+  },
+  tooltip: {
+      borderRadius: 6,
+      borderWidth: 2,
+      shadow: false,
+    style: {
+      padding: '7px',
+      fontSize: '10px'
+    }
+  },
+  xAxis: {
+    title: {
+      enabled: true,
+      align: 'high',
+      style: {
+        fontWeight: 'normal'
+      },
+    },
+    categories: ["<b>Street Sweeping</b><br/>Avg. Days to Fix: 50",
+                 "<b>Road Repair</b><br/>Avg. Days to Fix: 20",
+                 "<b>Survey</b><br/>Avg. Days to Fix: 15",
+                 "<b>Street Light</b><br/>Avg. Days to Fix: 10",
+                 "<b>Vegetation Control</b><br/>Avg. Days to Fix: 7",
+                 "<b>Building Maintenance</b><br/>Avg. Days to Fix: 5",
+                 "<b>Graffiti</b><br/>Avg. Days to Fix: 5",
+                 "<b>Drainage</b><br/>Avg. Days to Fix: 1",
+                 "<b>Electrical</b><br/>Avg. Days to Fix: 1",
+                 "<b>Illegal Dumping</b><br/>Avg. Days to Fix: 1"],
+    labels: {
+      style: {
+        color: "#333333",
+        fontFamily: "Helvetica,Arial,sans-serif",
+        fontSize: '12px'
+      }
+    },
+  },
+  yAxis: {
+    gridLineColor: "#BBBBBB",
+    gridLineDashStyle: 'Dot',
+    tickInterval: 1000,
+    max: 7500,
+    labels: {
+      step: 2,
+      style: {
+        color: "#333333",
+        fontFamily: "Helvetica,Arial,sans-serif"
+      }
+    },
+    min: 0,
+    stackLabels: {
+      enabled: true,
+      y: 3,
+      x: 3,
+      style: {
+        fontFamily: "Helvetica,Arial,sans-serif",
+        fontSize: "8.8px",
+        color: "#333333",
+      }
+    },
+    title: {
+      style: {
+        color: "#333333",
+        fontFamily: "Helvetica,Arial,sans-serif"
+      },
+      text: "Number of Requests"
+    }
+  }
+}
+
+// ajax call to data from the csv file
+$.get("_data/chart2_cityfixitdata.csv", function (data) {
+
+  // split the csv by line ("\n")
+  var lines = data.split(";");
+  var years = [2009, 2010, 2011, 2012].reverse();
+  var requestsByYear = [[], [], [], [], [], [], [], []];
+  // indices 0-3 are # requests;
+  // indices 4-7 are # requests via SCF
+
+  // loop through each line using $.each
+  $.each(lines, function(lineNo, line) {
+
+    // turn each line into an array that contains:
+        // items[0] = year
+        // items[2] = # requests for the year
+        // items[3] = # requests by SCF for the year
+    var items = line.split(",");
+
+    // use an if statement to differentiate between header & content
+    if (lineNo > 0) {
+
+      currentYear = parseFloat(items[0]);
+      //console.log(lineNo, currentYear);
+
+      // for the 2009 series, push in...
+      if ( currentYear == 2012) {
+        // requestsByYear[0] represents the # requests for 2009.
+        // this will be indices 0-3.
+        requestsByYear[0].push( parseFloat(items[2])-parseFloat(items[3]) );
+
+        // requestsByYear[4] represent the # requests via SCF for 2009.
+        // this will be indices 4-7.
+        requestsByYear[4].push( parseFloat(items[3]) );
+      }
+      else if (currentYear == 2011) {
+        requestsByYear[1].push( parseFloat(items[2])-parseFloat(items[3]) );
+        requestsByYear[5].push( parseFloat(items[3]) );
+      }
+      else if (currentYear == 2010) {
+        requestsByYear[2].push( parseFloat(items[2])-parseFloat(items[3]) );
+        requestsByYear[6].push( parseFloat(items[3]) );
+      }
+      else if (currentYear == 2009) {
+        requestsByYear[3].push( parseFloat(items[2])-parseFloat(items[3]) );
+        requestsByYear[7].push( parseFloat(items[3]) );
+      }
+
+    } // end the "if lineNo > 0" conditional
+  }); // end of
+
+  years[4] = "Requests via SeeClickFix"; // "2012 via SCF";
+  years[5] = "Requests via SeeClickFix"; // "2011 via SCF";
+  years[6] = "Requests via SeeClickFix"; // "2010 via SCF";
+  years[7] = "Requests via SeeClickFix"; // "2009 via SCF";
+
+  // setting up color
+  // these run in reverse.
+  // since my first four series are a spectrum, they should be
+
+  colors = ["#000000", "#6E6E6E", "#BABABA", "#D6D6D6", "#009933", "#009933", "#009933", "#009933"];
+
+  // for implementing the total # requests data [indices 0-3]
+  for(var i = 0; i < 8; i++) {
+
+    var seriesData = {
+      name: "",
+      id: undefined,
+      data: [],
+      color: undefined,
+      type: "bar",
+      stack: i % 4,
+      linkedTo: undefined,
+      legendIndex: undefined,
+    };
+
+    if(i < 4){
+      seriesData.name = "Total Requests in " + years[i];
+   } else seriesData.name = years[i];
+    seriesData.id = years[i];
+    seriesData.color = colors[i];
+    seriesData.data = requestsByYear[i];
+    seriesData.legendIndex = 8-i;
+
+    // link together the SCF ones. indices [4-7]
+    if (i >= 5) {
+        seriesData.linkedTo = ':previous'; // "SCF";
+    }
+
+    // after the object is properly constructed, push it to "optionsProbType.series"
+    optionsProbType.series.push(seriesData);
+
+  } // end loop
+
+  // finally draw the chart by creating a new "Highcharts" object, which has settings that are defined in "optionsProbType"
+  var chart = new Highcharts.Chart(optionsProbType);
+
+}); // end the $.get()
+
+</script>
+
+</body>
+</html>
